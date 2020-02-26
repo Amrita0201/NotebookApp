@@ -6,5 +6,6 @@ import com.tarento.notebook.models.User;
 
 public interface NotebookDao {
 	public User register(User user);
+	public User login(User user);
 	
 }

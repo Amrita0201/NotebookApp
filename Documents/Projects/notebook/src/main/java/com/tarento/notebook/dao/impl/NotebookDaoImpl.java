@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -51,6 +52,25 @@ public class NotebookDaoImpl implements NotebookDao{
 		
 		return user;
 	}
+
+	@Override
+	public User login(User user) {
+		User u=null;
+		try {
+			
+			String sql = "SELECT id, name as 'userName', email, password, is_active as 'isActive', is_deleted as 'isDeleted'\n"
+					+ " FROM user_data WHERE EMAIL=? AND PASSWORD=?";
+			//String enteredPassword = EncryptData.encrypt(user.getPassword(),secretKey) ;
+			u = jdbcTemplate.queryForObject(sql, new Object[] { user.getEmail(),EncryptData.encrypt(user.getPassword(),secretKey) },
+					new BeanPropertyRowMapper<User>(User.class));
+			return u;
+		} catch (Exception e) {
+			// TODO: handle exception
+			System.out.println("Error!! " + e.getMessage());
+		}
+		return u;
+	}
+
 	
 	
 

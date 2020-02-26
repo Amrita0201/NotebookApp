@@ -2,20 +2,33 @@ package com.tarento.notebook.models;
 
 public class User {
 	
-	private long id;
+	private Long id;
 	private String userName;
 	private String email;
 	private String password;
-	private boolean is_active;
-	private boolean is_deleted;
+	private Boolean isActive;
+	private Boolean isDeleted;
 	
-	public long getId() {
+	
+
+	public Long getId() {
 		return id;
 	}
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
-
+	public Boolean getIsActive() {
+		return isActive;
+	}
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
+	}
+	public Boolean getIsDeleted() {
+		return isDeleted;
+	}
+	public void setIsDeleted(Boolean isDeleted) {
+		this.isDeleted = isDeleted;
+	}
 	public String getUserName() {
 		return userName;
 	}
@@ -34,18 +47,7 @@ public class User {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-	public boolean isIs_active() {
-		return is_active;
-	}
-	public void setIs_active(boolean is_active) {
-		this.is_active = is_active;
-	}
-	public boolean isIs_deleted() {
-		return is_deleted;
-	}
-	public void setIs_deleted(boolean is_deleted) {
-		this.is_deleted = is_deleted;
-	}
+
 	
 	
 }

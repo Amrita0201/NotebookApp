@@ -12,5 +12,6 @@ public interface NotebookService {
 
 	public User register(User user);
 	
+	public User login(User user);
 		
 }

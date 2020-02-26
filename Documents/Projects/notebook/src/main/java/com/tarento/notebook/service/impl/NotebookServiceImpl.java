@@ -22,6 +22,16 @@ public class NotebookServiceImpl implements NotebookService{
 		// TODO Auto-generated method stub
 		return (notebookdao.register(user));
 	}
+
+	@Override
+	public User login(User user){
+		// TODO Auto-generated method stub
+		return notebookdao.login(user);
+	}
+	
+
+	
+	
 	
 
 }

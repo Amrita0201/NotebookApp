@@ -3,6 +3,7 @@ package com.tarento.notebook.controllers;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -23,5 +24,11 @@ public class NotebookController {
 	public User InsertUser(@RequestBody User user) {
 		//return (notebookserviceimpl.register(user.getUserName(),user.getEmail(),user.getPassword()));
 		return (notebookservice.register(user));
+	}
+	
+	@PostMapping(value = "/login")
+	public User Login(@RequestBody User user) {
+		//return (notebookserviceimpl.register(user.getUserName(),user.getEmail(),user.getPassword()));
+		return (notebookservice.login(user));
 	}
 }
