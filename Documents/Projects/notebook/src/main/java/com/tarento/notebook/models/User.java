@@ -8,9 +8,8 @@ public class User {
 	private String password;
 	private Boolean isActive;
 	private Boolean isDeleted;
+	private String creationDate;
 	
-	
-
 	public Long getId() {
 		return id;
 	}
@@ -47,7 +46,13 @@ public class User {
 	public void setPassword(String password) {
 		this.password = password;
 	}
+	public String getCreationDate() {
+		return creationDate;
+	}
+	public void setCreationDate(String creationDate) {
+		this.creationDate = creationDate;
+	}
 
 	
-	
+
 }
