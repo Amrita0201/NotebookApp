@@ -67,6 +67,6 @@ public class EncryptData implements PasswordEncoder {
 
 	@Override
 	public boolean matches(CharSequence charSequence, String s) {
-		return EncryptData.encrypt(charSequence.toString(), secKey).equals(s);
+		return EncryptData.encrypt(s, secKey).equals(charSequence.toString());
 	}
 }
