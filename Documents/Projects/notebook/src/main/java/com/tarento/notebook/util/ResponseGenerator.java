@@ -3,8 +3,8 @@ package com.tarento.notebook.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.tarento.notebook.constants.JsonKey;
 import com.tarento.notebook.models.ResponseContainer;
-import com.tarento.notebook.utility.JsonKey;
 
 public class ResponseGenerator {
     private static ObjectMapper objectMapper = new ObjectMapper();

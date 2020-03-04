@@ -4,8 +4,10 @@ import com.tarento.notebook.dao.NotebookDao;
 import com.tarento.notebook.models.Book;
 import com.tarento.notebook.models.Note;
 import com.tarento.notebook.models.User;
-import com.tarento.notebook.utility.EncryptData;
+import com.tarento.notebook.util.EncryptData;
+import com.tarento.notebook.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -16,11 +18,13 @@ import org.springframework.stereotype.Repository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 @Repository
 public class NotebookDaoImpl implements NotebookDao {
 
-    final String secretKey = "key21";
+    @Value("{jwt.secret.key}")
+    String secretKey;
 
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -28,19 +32,21 @@ public class NotebookDaoImpl implements NotebookDao {
     @Autowired
     EncryptData encryptdata;
 
+    @Autowired
+    JwtUtil jwtUtil;
+
     @Override
     public User register(User user) {
         try {
-            String enpassword = EncryptData.encrypt(user.getPassword(), secretKey);
-            //String  = encryptdata.encryptData(user.getPassword());
+            String encryptedPassword = EncryptData.encrypt(user.getPassword(), secretKey);
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(new PreparedStatementCreator() {
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                     String[] returnValColumn = new String[]{"id"};
                     PreparedStatement statement = con.prepareStatement("insert into user_data (name, email,password,creationDate) values  (?,?,?,curdate())", returnValColumn);
-                    statement.setString(1, user.getUserName());
+                    statement.setString(1, user.getName());
                     statement.setString(2, user.getEmail());
-                    statement.setString(3, enpassword);
+                    statement.setString(3, encryptedPassword);
                     return statement;
                 }
             }, keyHolder);
@@ -57,15 +63,22 @@ public class NotebookDaoImpl implements NotebookDao {
     public User login(User user) {
         User u = null;
         try {
-
-            String sql = "SELECT id, name as 'userName', email, password, isActive as 'isActive', isDeleted as 'isDeleted',creationDate as 'creationDate'\n"
+            String sql = "SELECT id, name, email, password, isActive as 'isActive', isDeleted as 'isDeleted',creationDate as 'creationDate'\n"
                     + " FROM user_data WHERE EMAIL=?";
-            //String enteredPassword = EncryptData.encrypt(user.getPassword(),secretKey) ;
             u = jdbcTemplate.queryForObject(sql, new Object[]{user.getEmail()},
-                    new BeanPropertyRowMapper<User>(User.class));
-            String encryptedPassword=EncryptData.encrypt(user.getPassword(), secretKey);
-            if(u.getPassword().equals(encryptedPassword))
+                    new BeanPropertyRowMapper<>(User.class));
+            String encryptedPassword = EncryptData.encrypt(user.getPassword(), secretKey);
+            if(u.getPassword().equals(encryptedPassword)) {
+                String jwt = jwtUtil.generateToken(new org.springframework.security.core.userdetails.User(
+                        user.getEmail(),
+                        user.getPassword(),
+                        new ArrayList<>()
+                ));
+                u.setToken(jwt);
+                sql = "update user_data set token='" + u.getToken() + "' where id=" + u.getId();
+                jdbcTemplate.update(sql);
                 u.setPassword(null);
+            }
             return u;
         } catch (Exception e) {
             // TODO: handle exception
@@ -150,4 +163,19 @@ public class NotebookDaoImpl implements NotebookDao {
 //		return null;
 //	}
 
+    @Override
+    public User findByEmail(String email) {
+        User u = null;
+        try {
+            String sql = "SELECT id, name as 'userName', email, password, isActive as 'isActive', isDeleted as 'isDeleted',creationDate as 'creationDate'\n"
+                    + " FROM user_data WHERE EMAIL=?";
+            u = jdbcTemplate.queryForObject(sql, new Object[]{email},
+                    new BeanPropertyRowMapper<>(User.class));
+        } catch (Exception e) {
+            // TODO: handle exception
+            System.out.println("Error!! " + e.getMessage());
+        } finally {
+            return u;
+        }
+    }
 }

@@ -7,8 +7,9 @@ import com.tarento.notebook.models.ResponseContainer;
 import com.tarento.notebook.models.User;
 import com.tarento.notebook.service.NotebookService;
 import com.tarento.notebook.util.ResponseGenerator;
-import com.tarento.notebook.utility.ResponseMessage;
+import com.tarento.notebook.constants.ResponseMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +21,11 @@ public class NotebookController {
 	
 	@Autowired
 	NotebookService notebookservice;
+
+	@GetMapping(value = "/hello")
+	public String test() {
+		return "Hello world";
+	}
 
 	@PostMapping(value = "/register", produces = "application/json")
 	public String InsertUser(@RequestBody User user, HttpServletResponse response) throws JsonProcessingException {
