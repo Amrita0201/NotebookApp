@@ -1,25 +1,22 @@
-package com.tarento.notebook.utility;
+package com.tarento.notebook.util;
 
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 
-
-import javax.crypto.spec.SecretKeySpec;
-
 @Component
-public class EncryptData {
+public class EncryptData implements PasswordEncoder {
+
+	@Value("{jwt.secret.key}")
+	private String secKey;
 
 	private static SecretKeySpec secretKey;
 	private static byte[] key;
@@ -61,5 +58,15 @@ public class EncryptData {
 			System.out.println("Error while decrypting: " + e.toString());
 		}
 		return null;
+	}
+
+	@Override
+	public String encode(CharSequence charSequence) {
+		return EncryptData.encrypt(charSequence.toString(), secKey);
+	}
+
+	@Override
+	public boolean matches(CharSequence charSequence, String s) {
+		return EncryptData.encrypt(s, secKey).equals(charSequence.toString());
 	}
 }

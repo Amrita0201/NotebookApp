@@ -1,14 +1,22 @@
 package com.tarento.notebook.models;
 
+import org.springframework.security.core.userdetails.UserDetails;
+
 public class User {
 	
 	private Long id;
-	private String userName;
+	private String name;
 	private String email;
 	private String password;
 	private Boolean isActive;
 	private Boolean isDeleted;
 	private String creationDate;
+	private String token;
+	
+	public User() {} 
+	public User(UserDetails userDetails) { 
+		this.email = userDetails.getUsername();
+	}
 	
 	public Long getId() {
 		return id;
@@ -28,11 +36,11 @@ public class User {
 	public void setIsDeleted(Boolean isDeleted) {
 		this.isDeleted = isDeleted;
 	}
-	public String getUserName() {
-		return userName;
+	public String getName() {
+		return name;
 	}
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public void setName(String name) {
+		this.name = name;
 	}
 	public String getEmail() {
 		return email;
@@ -52,7 +60,11 @@ public class User {
 	public void setCreationDate(String creationDate) {
 		this.creationDate = creationDate;
 	}
+	public String getToken() {
+		return token;
+	}
 
-	
-
+	public void setToken(String token) {
+		this.token = token;
+	}
 }

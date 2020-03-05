@@ -1,18 +1,24 @@
 package com.tarento.notebook.controllers;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.Gson;
+import com.tarento.notebook.constants.ResponseMessage;
 import com.tarento.notebook.models.Book;
 import com.tarento.notebook.models.Note;
 import com.tarento.notebook.models.ResponseContainer;
 import com.tarento.notebook.models.User;
 import com.tarento.notebook.service.NotebookService;
 import com.tarento.notebook.util.ResponseGenerator;
-import com.tarento.notebook.utility.ResponseMessage;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-import javax.servlet.http.HttpServletResponse;
 
 @RestController
 
@@ -20,6 +26,13 @@ public class NotebookController {
 	
 	@Autowired
 	NotebookService notebookservice;
+	
+	private Gson gson = new Gson();
+
+	@GetMapping(value = "/hello")
+	public String test() {
+		return "Hello world";
+	}
 
 	@PostMapping(value = "/register", produces = "application/json")
 	public String InsertUser(@RequestBody User user, HttpServletResponse response) throws JsonProcessingException {
@@ -54,8 +67,10 @@ public class NotebookController {
 		return ResponseGenerator.failureResponse(responseContainer);
 	}
 	
-	@PostMapping(value = "/book")
-	public Book InsertBook(@RequestBody Book book) {
+	@PostMapping(value = "/book", produces = "application/json")
+	public Book InsertBook(@RequestBody Book book, @RequestAttribute(value = "UserInfo") String UserInfo) {
+		User currentUser = fetchMyUser(UserInfo); 
+		book.setCreatedBy(currentUser.getId());
 		return (notebookservice.addBook(book));
 	}
 
@@ -67,5 +82,9 @@ public class NotebookController {
 	@PostMapping(value = "/addNoteToBook")
 	public Note InsertNote(@RequestBody Note note) {
 		return (notebookservice.addNoteToBook(note));
+	}
+	
+	private User fetchMyUser(String userInfo) { 
+		return gson.fromJson(userInfo, User.class);
 	}
 }

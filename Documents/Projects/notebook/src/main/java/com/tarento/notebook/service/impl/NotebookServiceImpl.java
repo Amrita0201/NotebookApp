@@ -19,27 +19,21 @@ public class NotebookServiceImpl implements NotebookService{
 
 	@Override
 	public User register(User user) {
-		
-		
-		// TODO Auto-generated method stub
 		return (notebookdao.register(user));
 	}
 
 	@Override
 	public User login(User user){
-		// TODO Auto-generated method stub
 		return notebookdao.login(user);
 	}
 
 	@Override
 	public Book addBook(Book book) {
-		// TODO Auto-generated method stub
 		return notebookdao.addBook(book);
 	}
 
 	@Override
 	public Note addNoteToBook(Note note) {
-		// TODO Auto-generated method stub
 		return notebookdao.addNoteToBook(note);
 	}
 //
@@ -51,7 +45,6 @@ public class NotebookServiceImpl implements NotebookService{
 
 	@Override
 	public String deleteBook(Book book) {
-		// TODO Auto-generated method stub
 		return notebookdao.deleteBook(book);
 	}
 	

@@ -1,7 +1,5 @@
 package com.tarento.notebook.dao;
 
-import java.util.List;
-
 import com.tarento.notebook.models.Book;
 import com.tarento.notebook.models.Note;
 import com.tarento.notebook.models.User;
@@ -13,5 +11,6 @@ public interface NotebookDao {
 	public Note addNoteToBook(Note note);
 //	public List getAllBooks(Book book);
 	public String deleteBook(Book book);
+	public User findByEmail(String email);
 	
 }

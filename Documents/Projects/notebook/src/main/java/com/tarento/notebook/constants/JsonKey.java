@@ -1,4 +1,4 @@
-package com.tarento.notebook.utility;
+package com.tarento.notebook.constants;
 
 public enum JsonKey {
 
