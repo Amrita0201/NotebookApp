@@ -8,6 +8,7 @@ public enum ResponseMessage {
     PASSWORD_INVALID("Password must be 8 or more characters"),
     INVALID_CREDENTIALS("Incorrect password"),
     NOT_LOGGED_IN("You are not logged in."),
+    INVALID_BOOKNAME("Book name already exists"),
 	ERROR("Error!"),
     SUCCESSFUL("Successful!");
 

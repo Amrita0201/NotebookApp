@@ -1,15 +1,12 @@
 package com.tarento.notebook.service.impl;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.tarento.notebook.dao.NotebookDao;
 import com.tarento.notebook.models.Book;
 import com.tarento.notebook.models.Note;
 import com.tarento.notebook.models.User;
 import com.tarento.notebook.service.NotebookService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class NotebookServiceImpl implements NotebookService{
@@ -33,8 +30,8 @@ public class NotebookServiceImpl implements NotebookService{
 	}
 
 	@Override
-	public Note addNoteToBook(Note note) {
-		return notebookdao.addNoteToBook(note);
+	public Note addNoteToBook(Note note, Long userId, Long bookId) {
+		return notebookdao.addNoteToBook(note, userId, bookId);
 	}
 //
 //	@Override

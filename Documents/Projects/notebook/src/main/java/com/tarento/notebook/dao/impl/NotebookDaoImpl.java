@@ -1,11 +1,12 @@
 package com.tarento.notebook.dao.impl;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-
+import com.tarento.notebook.dao.NotebookDao;
+import com.tarento.notebook.exception.BookNotOfUserException;
+import com.tarento.notebook.models.Book;
+import com.tarento.notebook.models.Note;
+import com.tarento.notebook.models.User;
+import com.tarento.notebook.util.EncryptData;
+import com.tarento.notebook.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -15,12 +16,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import com.tarento.notebook.dao.NotebookDao;
-import com.tarento.notebook.models.Book;
-import com.tarento.notebook.models.Note;
-import com.tarento.notebook.models.User;
-import com.tarento.notebook.util.EncryptData;
-import com.tarento.notebook.util.JwtUtil;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
 
 @Repository
 public class NotebookDaoImpl implements NotebookDao {
@@ -126,33 +126,48 @@ public class NotebookDaoImpl implements NotebookDao {
             book.setId(id);
         } catch (Exception e) {
             System.out.println("Error!! " + e.getMessage());
+            return null;
         }
 
         return book;
     }
 
     @Override
-    public Note addNoteToBook(Note note) {
+    public Note addNoteToBook(Note note, Long userId, Long bookId) {
+        Book book = null;
         try {
+            String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
+            book = jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
+                    new BeanPropertyRowMapper<>(Book.class));
+            if (book == null) {
+                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
+            }
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(new PreparedStatementCreator() {
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                     String[] returnValColumn = new String[]{"id"};
-                    PreparedStatement statement = con.prepareStatement("insert into notes (name,content,created_by,creation_date,updated_by,updation_date) values  (?,?,?,curdate(),?,curdate())", returnValColumn);
+                    PreparedStatement statement = con.prepareStatement(
+                            "insert into notes (name,content,created_by,creation_date, book_id) values  (?,?,?,curdate(),?)", returnValColumn);
                     statement.setString(1, note.getName());
-                    statement.setBlob(2, note.getContent());
+                    statement.setString(2, note.getContent());
                     statement.setLong(3, note.getCreatedBy());
-                    statement.setLong(4, note.getUpdatedBy());
+                    statement.setLong(4, bookId);
                     return statement;
                 }
             }, keyHolder);
             long id = keyHolder.getKey().longValue();
+            note.setBookId(bookId);
             note.setId(id);
+            return note;
+        } catch (BookNotOfUserException e) {
+            System.out.println("Error: " + e.getMessage());
+            note.setId(-1L);
+            return note;
         } catch (Exception e) {
-            System.out.println("Error!! " + e.getMessage());
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return null;
         }
-
-        return note;
     }
 
     @Override

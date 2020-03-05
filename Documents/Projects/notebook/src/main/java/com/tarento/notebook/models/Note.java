@@ -1,12 +1,10 @@
 package com.tarento.notebook.models;
 
-import com.mysql.jdbc.Blob;
-
 public class Note {
 	private Long id;
 	private String name;
-	private Blob content;
-	private Long book_id;
+	private String content;
+	private Long bookId;
 	private Boolean isStarred;
 	private Boolean isActive;
 	private Boolean isDeleted;
@@ -69,17 +67,17 @@ public class Note {
 	public void setUpdationDate(String updationDate) {
 		this.updationDate = updationDate;
 	}
-	public Blob getContent() {
+	public String getContent() {
 		return content;
 	}
-	public void setContent(Blob content) {
+	public void setContent(String content) {
 		this.content = content;
 	}
-	public Long getBook_id() {
-		return book_id;
+	public Long getBookId() {
+		return bookId;
 	}
-	public void setBook_id(Long book_id) {
-		this.book_id = book_id;
+	public void setBookId(Long bookId) {
+		this.bookId = bookId;
 	}
 	
 	

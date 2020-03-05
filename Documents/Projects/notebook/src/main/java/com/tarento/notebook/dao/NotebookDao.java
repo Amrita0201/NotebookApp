@@ -8,7 +8,7 @@ public interface NotebookDao {
 	public User register(User user);
 	public User login(User user);
 	public Book addBook(Book book);
-	public Note addNoteToBook(Note note);
+	public Note addNoteToBook(Note note, Long userId, Long bookId);
 //	public List getAllBooks(Book book);
 	public String deleteBook(Book book);
 	public User findByEmail(String email);
