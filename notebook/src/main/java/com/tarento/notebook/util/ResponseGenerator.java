@@ -20,12 +20,6 @@ public class ResponseGenerator {
         return JSONObjectUtil.getJsonString(response);
     }
 
-    /**
-     * this method will crate success response and send to controller.
-     *
-     * @param obj Object
-     * @return ObjectNode object.
-     */
     public static String successResponse(ResponseContainer responseContainer, Object obj) throws JsonProcessingException {
 
         ObjectNode response = objectMapper.createObjectNode();
@@ -40,11 +34,6 @@ public class ResponseGenerator {
         return JSONObjectUtil.getJsonString(response);
     }
 
-    /**
-     * this method will crate success response and send to controller.
-     *
-     * @return ObjectNode object.
-     */
     public static String successResponse(ResponseContainer responseContainer) throws JsonProcessingException {
 
         ObjectNode response = objectMapper.createObjectNode();

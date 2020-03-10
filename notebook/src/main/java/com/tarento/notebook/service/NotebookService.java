@@ -15,6 +15,8 @@ public interface NotebookService {
 
 	public Note addNoteToBook(Note note, Long userId, Long bookId);
 
-	public String deleteBook(Book book);
+	public Boolean deleteBook(Long userId, Long bookId);
+	
+	public Boolean checkUserIdAuthToken(Long userId, String authToken); 
 		
 }

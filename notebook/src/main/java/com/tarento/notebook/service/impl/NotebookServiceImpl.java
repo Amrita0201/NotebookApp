@@ -1,15 +1,20 @@
 package com.tarento.notebook.service.impl;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+
 import com.tarento.notebook.dao.NotebookDao;
 import com.tarento.notebook.models.Book;
 import com.tarento.notebook.models.Note;
 import com.tarento.notebook.models.User;
 import com.tarento.notebook.service.NotebookService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class NotebookServiceImpl implements NotebookService{
+	
+	@Autowired
+    JdbcTemplate jdbcTemplate;
 	
 	@Autowired
 	NotebookDao notebookdao;
@@ -41,13 +46,22 @@ public class NotebookServiceImpl implements NotebookService{
 //	}
 
 	@Override
-	public String deleteBook(Book book) {
-		return notebookdao.deleteBook(book);
+	public Boolean deleteBook(Long userId, Long bookId) {
+		return notebookdao.deleteBook(userId, bookId);
 	}
 	
-
+	@Override
+	public Boolean checkUserIdAuthToken(Long userId, String authToken) {
+		 String sql = "SELECT EXISTS(SELECT * FROM user_data WHERE id=? AND token=?)";
+         Boolean b=jdbcTemplate.queryForObject(sql, Boolean.class,userId, authToken);
+         return b;
+	}
 	
-	
-	
-
 }
+	
+
+	
+	
+	
+
+

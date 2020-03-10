@@ -48,7 +48,7 @@ public class NotebookController {
 		ResponseContainer responseContainer = null;
 		if (u == null) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-			responseContainer = new ResponseContainer(ResponseMessage.EMAIL_INVALID.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
+			responseContainer = new ResponseContainer(ResponseMessage.INVALID_CREDENTIALS.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
 			return ResponseGenerator.failureResponse(responseContainer);
 		}
 		if (u.getPassword() == null) {
@@ -77,17 +77,38 @@ public class NotebookController {
 		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
 		return ResponseGenerator.successResponse(responseContainer, b);
 	}
-
-//	@PostMapping(value = "/book/{id}")
-//	public Object DeleteBook(@RequestBody Book book) {
-//		return (notebookservice.deleteBook(book));
-//	}
 	
-	@PostMapping(value = "/book/{book_id}/note")
-	public Note InsertNote(@RequestBody Note note, @PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo") String UserInfo) {
+	@DeleteMapping(value = "/book/{book_id}", produces = "application/json")
+    public String DeleteBook(@PathVariable(value = "book_id") Long bookID, @RequestAttribute(value = "UserInfo")
+    String UserInfo, HttpServletResponse response) throws JsonProcessingException {
+		User currentUser = fetchMyUser(UserInfo); 
+		Boolean b = (notebookservice.deleteBook(currentUser.getId(), bookID));
+		ResponseContainer responseContainer = null;
+		if (b == false) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			responseContainer = new ResponseContainer(ResponseMessage.BOOK_DOESNOT_BELONG_TO_THE_USER.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer);
+    }
+	
+	@PostMapping(value = "/book/{book_id}/note", produces = "application/json")
+	public String InsertNote(@RequestBody Note note, @PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo") 
+		String UserInfo, HttpServletResponse response) throws JsonProcessingException {
 		User currentUser = fetchMyUser(UserInfo);
 		note.setCreatedBy(currentUser.getId());
-		return (notebookservice.addNoteToBook(note, currentUser.getId(), bookID));
+		Note n=notebookservice.addNoteToBook(note, currentUser.getId(), bookID);
+		ResponseContainer responseContainer = null;
+		if (n == null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			responseContainer = new ResponseContainer(ResponseMessage.BOOK_DOESNOT_BELONG_TO_THE_USER.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer);
 	}
 	
 	private User fetchMyUser(String userInfo) { 

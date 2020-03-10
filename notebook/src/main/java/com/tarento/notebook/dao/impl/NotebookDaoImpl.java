@@ -70,7 +70,7 @@ public class NotebookDaoImpl implements NotebookDao {
             u = jdbcTemplate.queryForObject(sql, new Object[]{user.getEmail()},
                     new BeanPropertyRowMapper<>(User.class));
             String encryptedPassword = EncryptData.encrypt(user.getPassword(), secretKey);
-            if(u.getPassword().equals(encryptedPassword)) {
+            if(u.getPassword().equals(encryptedPassword) && u.getIsActive()==true) {
                 String jwt = jwtUtil.generateToken(new org.springframework.security.core.userdetails.User(
                         user.getEmail(),
                         user.getPassword(),
@@ -171,9 +171,24 @@ public class NotebookDaoImpl implements NotebookDao {
     }
 
     @Override
-    public String deleteBook(Book book) {
-        // TODO Auto-generated method stub
-        return null;
+    public Boolean deleteBook(Long userId,Long bookId) {
+        try {
+            String sql = "SELECT EXISTS(SELECT * FROM books WHERE created_by=? AND id=?)";
+            Boolean b=jdbcTemplate.queryForObject(sql, Boolean.class,userId,bookId);
+//            Boolean b=jdbcTemplate.queryForObject(sql, new Object[]{userId,bookId});
+            if (b == false) {
+                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
+            }
+            jdbcTemplate.update("update books set is_deleted=1 where id=?", new Object[] {bookId});
+            return true;
+        } catch (BookNotOfUserException e) {
+            System.out.println("Error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return false;
+        }
     }
 
 //	@Override

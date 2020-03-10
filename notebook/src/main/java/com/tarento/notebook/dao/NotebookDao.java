@@ -10,7 +10,7 @@ public interface NotebookDao {
 	public Book addBook(Book book);
 	public Note addNoteToBook(Note note, Long userId, Long bookId);
 //	public List getAllBooks(Book book);
-	public String deleteBook(Book book);
+	public Boolean deleteBook(Long userId, Long bookId);
 	public User findByEmail(String email);
 	
 }
