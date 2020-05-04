@@ -10,6 +10,7 @@ public class Book {
 	private String creationDate;
 	private Long updatedBy;
 	private String updationDate;
+	private Long numOfNotes;
 	
 	public Long getId() {
 		return id;
@@ -59,7 +60,12 @@ public class Book {
 	public void setUpdationDate(String updationDate) {
 		this.updationDate = updationDate;
 	}
-	
-	
 
+	public Long getNumOfNotes() {
+		return numOfNotes;
+	}
+
+	public void setNumOfNotes(Long numOfNotes) {
+		this.numOfNotes = numOfNotes;
+	}
 }

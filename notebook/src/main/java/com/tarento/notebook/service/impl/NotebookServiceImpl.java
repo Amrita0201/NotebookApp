@@ -1,14 +1,14 @@
 package com.tarento.notebook.service.impl;
 
+import com.tarento.notebook.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.tarento.notebook.dao.NotebookDao;
-import com.tarento.notebook.models.Book;
-import com.tarento.notebook.models.Note;
-import com.tarento.notebook.models.User;
 import com.tarento.notebook.service.NotebookService;
+
+import java.util.List;
 
 @Service
 public class NotebookServiceImpl implements NotebookService{
@@ -35,15 +35,14 @@ public class NotebookServiceImpl implements NotebookService{
 	}
 
 	@Override
+	public List<Book> getBooks(Long userId) {
+		return notebookdao.getAllBooks(userId);
+	}
+
+	@Override
 	public Note addNoteToBook(Note note, Long userId, Long bookId) {
 		return notebookdao.addNoteToBook(note, userId, bookId);
 	}
-//
-//	@Override
-//	public List getAllBooks(Book book) {
-//		// TODO Auto-generated method stub
-//		return notebookdao.getAllBooks(book);
-//	}
 
 	@Override
 	public Boolean deleteBook(Long userId, Long bookId) {
@@ -56,7 +55,21 @@ public class NotebookServiceImpl implements NotebookService{
          Boolean b=jdbcTemplate.queryForObject(sql, Boolean.class,userId, authToken);
          return b;
 	}
-	
+
+	@Override
+	public List<NoteResponse> getNotes(Long userId, Long bookId) {
+		return notebookdao.getNotes(userId, bookId );
+	}
+
+	@Override
+	public Boolean updateBook(Book book, Long userId, Long bookId){
+		return notebookdao.updateBook(book, userId, bookId);
+	}
+
+	@Override
+	public Tag addTag(Tag tag, Long bookID, Long noteID, Long userId) {
+		return notebookdao.addTag(tag, bookID, noteID, userId);
+	}
 }
 	
 

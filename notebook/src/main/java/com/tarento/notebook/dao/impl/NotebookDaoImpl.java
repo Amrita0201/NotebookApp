@@ -2,13 +2,14 @@ package com.tarento.notebook.dao.impl;
 
 import com.tarento.notebook.dao.NotebookDao;
 import com.tarento.notebook.exception.BookNotOfUserException;
-import com.tarento.notebook.models.Book;
-import com.tarento.notebook.models.Note;
-import com.tarento.notebook.models.User;
+import com.tarento.notebook.exception.DuplicateTagForUserException;
+import com.tarento.notebook.exception.DuplicateTagInNotesException;
+import com.tarento.notebook.models.*;
 import com.tarento.notebook.util.EncryptData;
 import com.tarento.notebook.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -21,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public class NotebookDaoImpl implements NotebookDao {
@@ -70,7 +72,7 @@ public class NotebookDaoImpl implements NotebookDao {
             u = jdbcTemplate.queryForObject(sql, new Object[]{user.getEmail()},
                     new BeanPropertyRowMapper<>(User.class));
             String encryptedPassword = EncryptData.encrypt(user.getPassword(), secretKey);
-            if(u.getPassword().equals(encryptedPassword) && u.getIsActive()==true) {
+            if (u.getPassword().equals(encryptedPassword) && u.getIsActive() == true) {
                 String jwt = jwtUtil.generateToken(new org.springframework.security.core.userdetails.User(
                         user.getEmail(),
                         user.getPassword(),
@@ -88,24 +90,6 @@ public class NotebookDaoImpl implements NotebookDao {
         }
         return u;
     }
-//    @Override
-//    public User login(User user) {
-//        User u = null;
-//        try {
-//
-//            String sql = "SELECT id, name as 'userName', email, password, isActive as 'isActive', isDeleted as 'isDeleted',creationDate as 'creationDate'\n"
-//                    + " FROM user_data WHERE EMAIL=? AND PASSWORD=?";
-//            //String enteredPassword = EncryptData.encrypt(user.getPassword(),secretKey) ;
-//            u = jdbcTemplate.queryForObject(sql, new Object[]{user.getEmail(), EncryptData.encrypt(user.getPassword(), secretKey)},
-//                    new BeanPropertyRowMapper<User>(User.class));
-//            u.setPassword(null);
-//            return u;
-//        } catch (Exception e) {
-//            // TODO: handle exception
-//            System.out.println("Error!! " + e.getMessage());
-//        }
-//        return u;
-//    }
 
     @Override
     public Book addBook(Book book) {
@@ -139,15 +123,13 @@ public class NotebookDaoImpl implements NotebookDao {
             String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
             book = jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
                     new BeanPropertyRowMapper<>(Book.class));
-            if (book == null) {
-                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
-            }
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(new PreparedStatementCreator() {
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                     String[] returnValColumn = new String[]{"id"};
                     PreparedStatement statement = con.prepareStatement(
                             "insert into notes (name,content,created_by,creation_date, book_id) values  (?,?,?,curdate(),?)", returnValColumn);
+//                    jdbcTemplate.update("update books set books.number_of_notes = (select COUNT(book_id) from notes where notes.book_id = ?)", new Object[]{bookId});
                     statement.setString(1, note.getName());
                     statement.setString(2, note.getContent());
                     statement.setLong(3, note.getCreatedBy());
@@ -158,10 +140,7 @@ public class NotebookDaoImpl implements NotebookDao {
             long id = keyHolder.getKey().longValue();
             note.setBookId(bookId);
             note.setId(id);
-            return note;
-        } catch (BookNotOfUserException e) {
-            System.out.println("Error: " + e.getMessage());
-            note.setId(-1L);
+            jdbcTemplate.update("update books set number_of_notes = (select COUNT(book_id) from notes where notes.book_id = books.id) WHERE id=?", new Object[]{bookId});
             return note;
         } catch (Exception e) {
             e.printStackTrace();
@@ -171,19 +150,15 @@ public class NotebookDaoImpl implements NotebookDao {
     }
 
     @Override
-    public Boolean deleteBook(Long userId,Long bookId) {
+    public Boolean deleteBook(Long userId, Long bookId) {
         try {
             String sql = "SELECT EXISTS(SELECT * FROM books WHERE created_by=? AND id=?)";
-            Boolean b=jdbcTemplate.queryForObject(sql, Boolean.class,userId,bookId);
-//            Boolean b=jdbcTemplate.queryForObject(sql, new Object[]{userId,bookId});
+            Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, bookId);
             if (b == false) {
                 throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
             }
-            jdbcTemplate.update("update books set is_deleted=1 where id=?", new Object[] {bookId});
+            jdbcTemplate.update("update books set is_deleted=1 where id=?", new Object[]{bookId});
             return true;
-        } catch (BookNotOfUserException e) {
-            System.out.println("Error: " + e.getMessage());
-            return false;
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error!! " + e);
@@ -191,11 +166,45 @@ public class NotebookDaoImpl implements NotebookDao {
         }
     }
 
-//	@Override
-//	public Book getAllBooks(Book book) {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+    @Override
+    public List<Book> getAllBooks(Long userId) {
+        List<Book> bookList = null;
+        try {
+            String sql = "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE created_by=?";
+            bookList = jdbcTemplate.query(sql, new Object[]{userId},
+                    new BeanPropertyRowMapper<>(Book.class));
+            return bookList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return bookList;
+        }
+
+    }
+
+    @Override
+    public List<NoteResponse> getNotes(Long userId, Long bookId) {
+        List<Note> noteList = null;
+        List<NoteResponse> noteResponseList = null;
+        try {
+            String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
+            jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
+                    new BeanPropertyRowMapper<>(Book.class));
+            String sql1 = "SELECT * FROM notes WHERE created_by=? AND book_id=?";
+            noteList = jdbcTemplate.query(sql1, new Object[]{userId, bookId},
+                    new BeanPropertyRowMapper<>(Note.class));
+            if (noteList != null) {
+                for (Note note : noteList) {
+                    String sql2 = "";
+                }
+            }
+            return noteResponseList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return null;
+        }
+    }
 
     @Override
     public User findByEmail(String email) {
@@ -211,5 +220,81 @@ public class NotebookDaoImpl implements NotebookDao {
         } finally {
             return u;
         }
+    }
+
+    @Override
+    public Boolean updateBook(Book book, Long userId, Long bookId) {
+        try {
+            String sql = "SELECT EXISTS(SELECT * FROM books WHERE created_by=? AND id=?)";
+            Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, bookId);
+            if (b == false) {
+                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
+            }
+            jdbcTemplate.update("update books set name=? where id=?", new Object[]{book.getName(), bookId});
+            return true;
+        } catch (BookNotOfUserException e) {
+            System.out.println("Error: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return false;
+        }
+    }
+
+    @Override
+    public Tag addTag(Tag tag, Long bookID, Long noteID, Long userId) {
+        List<Tag> t = null;
+        String sql = "SELECT EXISTS(SELECT * FROM notes WHERE created_by=? AND id=? AND book_id=?)";
+        Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, noteID, bookID);
+        if (!b) {
+            return null;
+        }
+        sql = "SELECT * FROM tags WHERE name=?";
+        t = jdbcTemplate.query(sql, new Object[]{tag.getName()},
+                new BeanPropertyRowMapper<>(Tag.class));
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        if (t.size() == 0) {
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    String[] returnValColumn = new String[]{"id"};
+                    PreparedStatement statement = con.prepareStatement("insert into tags (name) values  (?)", returnValColumn);
+                    statement.setString(1, tag.getName());
+                    return statement;
+                }
+            }, keyHolder);
+            Long id = keyHolder.getKey().longValue();
+            t.add(new Tag());
+            t.get(0).setName(tag.getName());
+            t.get(0).setId(id);
+        }
+        tag.setId(t.get(0).getId());
+        try {
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    String[] returnValColumn = new String[]{"id"};
+                    PreparedStatement statement = con.prepareStatement("insert into note_tag_map (tag_id, note_id) values  (?,?)", returnValColumn);
+                    statement.setLong(1, tag.getId());
+                    statement.setLong(2, noteID);
+                    return statement;
+                }
+            }, keyHolder);
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateTagInNotesException(e.getMessage(), e.getCause());
+        }
+        try {
+            jdbcTemplate.update(new PreparedStatementCreator() {
+                public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                    String[] returnValColumn = new String[]{"id"};
+                    PreparedStatement statement = con.prepareStatement("insert into user_tag_map (tag_id, user_id) values  (?,?)", returnValColumn);
+                    statement.setLong(1, tag.getId());
+                    statement.setLong(2, userId);
+                    return statement;
+                }
+            }, keyHolder);
+        } catch (DuplicateKeyException e) {
+            throw new DuplicateTagForUserException(e.getMessage(), e.getCause());
+        }
+        return tag;
     }
 }
