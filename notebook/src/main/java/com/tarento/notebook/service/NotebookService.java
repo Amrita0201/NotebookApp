@@ -23,7 +23,17 @@ public interface NotebookService {
 
 	public Boolean updateBook(Book book, Long userId, Long bookId);
 
-	public List<NoteResponse> getNotes(Long userId, Long BookId);
+	public List<Note> getNotes(Long userId, Long BookId);
 
 	Tag addTag(Tag tag,Long bookID, Long noteID, Long userId);
+
+	List<Book> getBooksIfStarred(Long userId);
+
+	List<Book> getBooksByName(Long userId, String name);
+
+	List<Book> getBooksByTag(Long userId, String tag);
+
+	NoteResponse getNoteById(Long userId, Long bookId, Long noteId);
+
+	List<Tag> getTagsByUserId(Long userId);
 }

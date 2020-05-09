@@ -68,4 +68,6 @@ public class Book {
 	public void setNumOfNotes(Long numOfNotes) {
 		this.numOfNotes = numOfNotes;
 	}
+
+
 }

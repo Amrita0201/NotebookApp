@@ -11,7 +11,8 @@ public enum ResponseMessage {
     INTERNAL_SERVER_ERROR("Internal Server Error!"),
     SUCCESSFUL("Successful!"),
     TAG_EXISTS_IN_NOTES("Note already has the tag!"),
-    BOOK_DOESNOT_BELONG_TO_THE_USER("Book does not belong to the user!");
+    BOOK_DOESNOT_BELONG_TO_THE_USER("Book does not belong to the user!"),
+    INVALID_REQUEST("Invalid Request!!");
 
     private String message;
 

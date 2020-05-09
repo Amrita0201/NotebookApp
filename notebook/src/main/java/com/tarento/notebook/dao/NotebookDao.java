@@ -13,7 +13,12 @@ public interface NotebookDao {
 	public Boolean deleteBook(Long userId, Long bookId);
 	public User findByEmail(String email);
 	public Boolean updateBook(Book book, Long userId, Long bookId);
-	public List<NoteResponse> getNotes(Long userId, Long bookId);
+	public List<Note> getNotes(Long userId, Long bookId);
 	public Tag addTag(Tag tag, Long bookID, Long noteID, Long userId);
-	
+	public List<Book> getBooksIfStarred(Long userId);
+	public List<Book> getBooksByName(Long userId, String name);
+	public List<Book> getBooksByTag(Long userId, String tag);
+	NoteResponse getNoteById(Long userId, Long bookId, Long noteId);
+	List<Tag> getTagsByUserId(Long userId);
+
 }

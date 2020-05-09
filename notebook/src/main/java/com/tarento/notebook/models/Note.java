@@ -79,6 +79,23 @@ public class Note {
 	public void setBookId(Long bookId) {
 		this.bookId = bookId;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Note other = (Note) obj;
+		if (this.getBookId() == null) {
+			if (other.getBookId() != null)
+				return false;
+		} else if (!this.getBookId().equals(other.getBookId()))
+			return false;
+		return true;
+	}
 	
 	
 	

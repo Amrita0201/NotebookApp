@@ -57,7 +57,7 @@ public class NotebookServiceImpl implements NotebookService{
 	}
 
 	@Override
-	public List<NoteResponse> getNotes(Long userId, Long bookId) {
+	public List<Note> getNotes(Long userId, Long bookId) {
 		return notebookdao.getNotes(userId, bookId );
 	}
 
@@ -69,6 +69,31 @@ public class NotebookServiceImpl implements NotebookService{
 	@Override
 	public Tag addTag(Tag tag, Long bookID, Long noteID, Long userId) {
 		return notebookdao.addTag(tag, bookID, noteID, userId);
+	}
+
+	@Override
+	public List<Book> getBooksIfStarred(Long userId) {
+		return notebookdao.getBooksIfStarred(userId);
+	}
+
+	@Override
+	public List<Book> getBooksByName(Long userId, String name) {
+		return notebookdao.getBooksByName(userId, name);
+	}
+
+	@Override
+	public List<Book> getBooksByTag(Long userId, String tag) {
+		return notebookdao.getBooksByTag(userId, tag);
+	}
+
+	@Override
+	public NoteResponse getNoteById(Long userId, Long bookId, Long noteId) {
+		return notebookdao.getNoteById(userId, bookId, noteId);
+	}
+
+	@Override
+	public List<Tag> getTagsByUserId(Long userId) {
+		return notebookdao.getTagsByUserId(userId);
 	}
 }
 	

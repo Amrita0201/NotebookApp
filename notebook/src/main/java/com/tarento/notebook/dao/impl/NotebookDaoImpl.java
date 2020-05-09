@@ -20,9 +20,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Repository
 public class NotebookDaoImpl implements NotebookDao {
@@ -183,9 +181,8 @@ public class NotebookDaoImpl implements NotebookDao {
     }
 
     @Override
-    public List<NoteResponse> getNotes(Long userId, Long bookId) {
+    public List<Note> getNotes(Long userId, Long bookId) {
         List<Note> noteList = null;
-        List<NoteResponse> noteResponseList = null;
         try {
             String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
             jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
@@ -193,12 +190,10 @@ public class NotebookDaoImpl implements NotebookDao {
             String sql1 = "SELECT * FROM notes WHERE created_by=? AND book_id=?";
             noteList = jdbcTemplate.query(sql1, new Object[]{userId, bookId},
                     new BeanPropertyRowMapper<>(Note.class));
-            if (noteList != null) {
-                for (Note note : noteList) {
-                    String sql2 = "";
-                }
+            if (noteList.size() == 0) {
+                return null;
             }
-            return noteResponseList;
+            return noteList;
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("Error!! " + e);
@@ -239,6 +234,115 @@ public class NotebookDaoImpl implements NotebookDao {
             e.printStackTrace();
             System.out.println("Error!! " + e);
             return false;
+        }
+    }
+
+    @Override
+    public List<Book> getBooksIfStarred(Long userId) {
+        List<Book> bookList = null;
+        try {
+            String sql = "select book_id from notes where is_starred=1 AND created_by=?;";
+            List<Note> notesList = jdbcTemplate.query(sql, new Object[]{userId},
+                    new BeanPropertyRowMapper<>(Note.class));
+            Set<Note> bookIdSet = new HashSet<>(notesList);
+            notesList.clear();
+            notesList.addAll(bookIdSet);
+            bookList = jdbcTemplate.query(new PreparedStatementCreator() {
+                @Override
+                public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                    String sql = "select * from books where ";
+                    StringBuffer sqlSB = new StringBuffer(sql);
+                    boolean flag = false;
+                    for(Note note: notesList) {
+                        if (flag) {
+                            sqlSB.append(" or ");
+                        }
+                        sqlSB.append("(id=").append(note.getBookId()).append(" and ").append("created_by=").append(userId).append(")");
+                        flag = true;
+                    }
+                    PreparedStatement ps = connection.prepareStatement(sqlSB.toString());
+                    return ps;
+                }
+            }, new BeanPropertyRowMapper<>(Book.class));
+            return bookList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return bookList;
+        }
+    }
+
+    @Override
+    public List<Book> getBooksByName(Long userId, String name) {
+        List<Book> bookList = null;
+        try {
+            String sql = "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE created_by=? AND name=?";
+            bookList = jdbcTemplate.query(sql, new Object[]{userId, name},
+                    new BeanPropertyRowMapper<>(Book.class));
+            return bookList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return bookList;
+        }
+    }
+
+    @Override
+    public List<Book> getBooksByTag(Long userId, String tag) {
+        List<Book> bookList = null;
+        try {
+            String sql = "select * from tags where name=?";
+            List<Tag> tagList = jdbcTemplate.query(sql, new Object[]{tag},
+                    new BeanPropertyRowMapper<>(Tag.class));
+            if (tagList.size() == 0) {
+                return null;
+            }
+            Long tagId = tagList.get(0).getId();
+            sql = "select note_id from note_tag_map where tag_id=?";
+            List<NoteTagMap> noteTagMapList = jdbcTemplate.query(sql, new Object[]{tagId},
+                    BeanPropertyRowMapper.newInstance(NoteTagMap.class));
+            List<Note> notesList = jdbcTemplate.query(new PreparedStatementCreator() {
+                @Override
+                public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                    String sql = "select * from notes where ";
+                    StringBuffer sqlSB = new StringBuffer(sql);
+                    boolean flag = false;
+                    for(NoteTagMap noteTagMap: noteTagMapList) {
+                        if (flag) {
+                            sqlSB.append(" or ");
+                        }
+                        sqlSB.append("(id=").append(noteTagMap.getNoteId()).append(" and ").append("created_by=").append(userId).append(")");
+                        flag = true;
+                    }
+                    PreparedStatement ps = connection.prepareStatement(sqlSB.toString());
+                    return ps;
+                }
+            }, new BeanPropertyRowMapper<>(Note.class));
+            Set<Note> bookIdSet = new HashSet<>(notesList);
+            notesList.clear();
+            notesList.addAll(bookIdSet);
+            bookList = jdbcTemplate.query(new PreparedStatementCreator() {
+                @Override
+                public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                    String sql = "select * from books where ";
+                    StringBuffer sqlSB = new StringBuffer(sql);
+                    boolean flag = false;
+                    for(Note note: notesList) {
+                        if (flag) {
+                            sqlSB.append(" or ");
+                        }
+                        sqlSB.append("(id=").append(note.getBookId()).append(" and ").append("created_by=").append(userId).append(")");
+                        flag = true;
+                    }
+                    PreparedStatement ps = connection.prepareStatement(sqlSB.toString());
+                    return ps;
+                }
+            }, new BeanPropertyRowMapper<>(Book.class));
+            return bookList;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return bookList;
         }
     }
 
@@ -296,5 +400,86 @@ public class NotebookDaoImpl implements NotebookDao {
             throw new DuplicateTagForUserException(e.getMessage(), e.getCause());
         }
         return tag;
+    }
+
+    @Override
+    public NoteResponse getNoteById(Long userId, Long bookId, Long noteId) {
+        List<Note> noteList = null;
+        try {
+            String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
+            jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
+                    new BeanPropertyRowMapper<>(Book.class));
+            String sql1 = "SELECT * FROM notes WHERE created_by=? AND book_id=? AND id=?";
+            noteList = jdbcTemplate.query(sql1, new Object[]{userId, bookId, noteId},
+                    new BeanPropertyRowMapper<>(Note.class));
+            if (noteList.size() == 0) {
+                return null;
+            }
+            NoteResponse noteResponse = new NoteResponse();
+            noteResponse.setNote(noteList.get(0));
+            sql = "select * from note_tag_map where note_id=?";
+            List<NoteTagMap> noteTagMapList = jdbcTemplate.query(sql, new Object[]{noteId},
+                    new BeanPropertyRowMapper<>(NoteTagMap.class));
+            if (noteTagMapList.size() != 0) {
+                List<Tag> tagList = jdbcTemplate.query(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                        String sql = "select * from tags where ";
+                        StringBuffer sqlSB = new StringBuffer(sql);
+                        boolean flag = false;
+                        for (NoteTagMap noteTagMap : noteTagMapList) {
+                            if (flag) {
+                                sqlSB.append(" or ");
+                            }
+                            sqlSB.append("id=").append(noteTagMap.getTagId());
+                            flag = true;
+                        }
+                        PreparedStatement ps = connection.prepareStatement(sqlSB.toString());
+                        return ps;
+                    }
+                }, new BeanPropertyRowMapper<>(Tag.class));
+                noteResponse.setTags(tagList);
+            }
+            return noteResponse;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return null;
+        }
+    }
+
+    @Override
+    public List<Tag> getTagsByUserId(Long userId) {
+        try {
+            String sql = "select * from user_tag_map where user_id=?";
+            List<UserTagMap> userTagMapList = jdbcTemplate.query(sql, new Object[]{userId},
+                    new BeanPropertyRowMapper<>(UserTagMap.class));
+            if (userTagMapList.size() != 0) {
+                List<Tag> tagList = jdbcTemplate.query(new PreparedStatementCreator() {
+                    @Override
+                    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+                        String sql = "select * from tags where";
+                        StringBuffer sqlSB = new StringBuffer(sql);
+                        boolean flag = false;
+                        for (UserTagMap userTagMap : userTagMapList) {
+                            if (flag) {
+                                sqlSB.append(" or");
+                            }
+                            sqlSB.append(" id=").append(userTagMap.getTagId());
+                            flag = true;
+                        }
+                        PreparedStatement ps = connection.prepareStatement(sqlSB.toString());
+                        return ps;
+                    }
+                }, BeanPropertyRowMapper.newInstance(Tag.class));
+                return tagList;
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return null;
+
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.tarento.notebook.models.*;
 import com.tarento.notebook.service.NotebookService;
 import com.tarento.notebook.util.ResponseGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -129,16 +130,21 @@ public class NotebookController {
 		return ResponseGenerator.successResponse(responseContainer);
 	}
 
-//	@GetMapping(value="/book/{book_id}/note", produces="application/json")
-//	public String GetNotes(@PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo")
-//		String UserInfo, HttpServletResponse response) throws JsonProcessingException{
-//		User currentUser = fetchMyUser(UserInfo);
-////		List<Note> note = (notebookservice.getNotes(currentUser.getId(), bookID));
-//		ResponseContainer responseContainer = null;
-//		response.setStatus(HttpServletResponse.SC_OK);
-//		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
-//		return ResponseGenerator.successResponse(responseContainer, note);
-//	}
+	@GetMapping(value="/book/{book_id}/note", produces="application/json")
+	public String GetNotes(@PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo")
+		String UserInfo, HttpServletResponse response) throws JsonProcessingException{
+		User currentUser = fetchMyUser(UserInfo);
+		List<Note> note = (notebookservice.getNotes(currentUser.getId(), bookID));
+		ResponseContainer responseContainer = null;
+		if (note == null) {
+			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+			responseContainer = new ResponseContainer(ResponseMessage.INVALID_REQUEST.getMessage(), String.valueOf(HttpStatus.UNPROCESSABLE_ENTITY.value()), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_OK);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer, note);
+	}
 
 	@PostMapping(value = "/book/{book_id}/note", produces = "application/json")
 	public String InsertNote(@RequestBody Note note, @PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo") 
@@ -163,8 +169,35 @@ public class NotebookController {
 						 @RequestParam(required = false) String name,
 						 @RequestParam(required = false) String tag,
 						 HttpServletResponse response) throws JsonProcessingException{
+		User currentUser = fetchMyUser(UserInfo);
+		ResponseContainer responseContainer = null;
+		if(starred==null && (name==null || name.trim().isEmpty()) && (tag==null || tag.trim().isEmpty())) {
+			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+			responseContainer = new ResponseContainer(ResponseMessage.INVALID_REQUEST.getMessage(), String.valueOf(HttpStatus.UNPROCESSABLE_ENTITY.value()), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		if(starred!=null && (name==null || name.trim().isEmpty()) && (tag==null || tag.trim().isEmpty())){
+			List<Book> book = (notebookservice.getBooksIfStarred(currentUser.getId()));
+			response.setStatus(HttpServletResponse.SC_OK);
+			responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+			return ResponseGenerator.successResponse(responseContainer, book);
+		}
 
+		if(starred==null && (name!=null && !name.trim().isEmpty()) && (tag==null || tag.trim().isEmpty())){
+			List<Book> book = (notebookservice.getBooksByName(currentUser.getId(), name));
+			response.setStatus(HttpServletResponse.SC_OK);
+			responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+			return ResponseGenerator.successResponse(responseContainer, book);
+		}
+
+		if(starred==null && (name==null || name.trim().isEmpty()) && (tag!=null && !tag.trim().isEmpty())){
+			List<Book> book = (notebookservice.getBooksByTag(currentUser.getId(), tag));
+			response.setStatus(HttpServletResponse.SC_OK);
+			responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+			return ResponseGenerator.successResponse(responseContainer, book);
+		}
 		return null;
+
 	}
 
 //	@DeleteMapping(value = "/book/{book_id}/note", produces = "application/json")
@@ -200,8 +233,34 @@ public class NotebookController {
 		return ResponseGenerator.successResponse(responseContainer);
 	}
 
+	@GetMapping(value = "/book/{book_id}/note/{note_id}", produces = "application/json")
+	public String GetNoteById(@PathVariable(value = "book_id") long bookID, @PathVariable(value = "note_id") long noteID, @RequestAttribute(value = "UserInfo")
+			String UserInfo, HttpServletResponse response) throws JsonProcessingException{
+		User currentUser = fetchMyUser(UserInfo);
+		NoteResponse noteResponse = (notebookservice.getNoteById(currentUser.getId(), bookID, noteID));
+		ResponseContainer responseContainer = null;
+		if (noteResponse == null) {
+			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+			responseContainer = new ResponseContainer(ResponseMessage.INVALID_REQUEST.getMessage(), String.valueOf(HttpStatus.UNPROCESSABLE_ENTITY.value()), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_OK);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer, noteResponse);
+	}
 
-	
+	@GetMapping(value = "/tags", produces = "application/json")
+	public String GetTagsByUserId(@RequestAttribute(value = "UserInfo")
+			String UserInfo, HttpServletResponse response) throws JsonProcessingException{
+		User currentUser = fetchMyUser(UserInfo);
+		List<Tag> tagList = (notebookservice.getTagsByUserId(currentUser.getId()));
+		response.setStatus(HttpServletResponse.SC_OK);
+		ResponseContainer responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_OK), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer, tagList);
+	}
+
+
+
 	private User fetchMyUser(String userInfo) { 
 		return gson.fromJson(userInfo, User.class);
 	}
