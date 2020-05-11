@@ -200,11 +200,21 @@ public class NotebookController {
 
 	}
 
-//	@DeleteMapping(value = "/book/{book_id}/note", produces = "application/json")
-//	public String DeleteNote(@PathVariable(value = "book_id") Long bookID, @RequestAttribute(value = "UserInfo")
-//			String UserInfo, HttpServletResponse response) throws JsonProcessingException{
-//		return null;
-//	}
+	@DeleteMapping(value = "/book/{book_id}/note/{note_id}", produces = "application/json")
+	public String DeleteNote(@PathVariable(value = "book_id") Long bookID, @PathVariable(value = "note_id") Long noteID, @RequestAttribute(value = "UserInfo")
+			String UserInfo, HttpServletResponse response) throws JsonProcessingException{
+		User currentUser = fetchMyUser(UserInfo);
+		Boolean b = (notebookservice.deleteNote(currentUser.getId(), bookID, noteID));
+		ResponseContainer responseContainer = null;
+		if (b == false) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			responseContainer = new ResponseContainer(ResponseMessage.BOOK_DOESNOT_BELONG_TO_THE_USER.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer);
+	}
 
 	@PostMapping(value = "/book/{book_id}/note/{note_id}", produces = "application/json")
 	public String AddTag(@RequestBody Tag tag, @PathVariable(value = "book_id") long bookID, @PathVariable(value = "note_id") long noteID, @RequestAttribute(value = "UserInfo")

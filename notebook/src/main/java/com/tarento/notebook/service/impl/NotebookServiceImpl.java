@@ -95,6 +95,11 @@ public class NotebookServiceImpl implements NotebookService{
 	public List<Tag> getTagsByUserId(Long userId) {
 		return notebookdao.getTagsByUserId(userId);
 	}
+
+	@Override
+	public Boolean deleteNote(Long userId, Long bookId, Long noteId) {
+		return notebookdao.deleteNote(userId, bookId, noteId);
+	}
 }
 	
 

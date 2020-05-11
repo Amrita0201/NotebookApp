@@ -165,10 +165,27 @@ public class NotebookDaoImpl implements NotebookDao {
     }
 
     @Override
+    public Boolean deleteNote(Long userId, Long bookId, Long noteId) {
+        try {
+            String sql = "SELECT EXISTS(SELECT * FROM notes WHERE created_by=? AND id=? AND book_id=?)";
+            Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, noteId, bookId);
+            if (b == false) {
+                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
+            }
+            jdbcTemplate.update("update notes set is_deleted=1 where id=?", new Object[]{noteId});
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return false;
+        }
+    }
+
+    @Override
     public List<Book> getAllBooks(Long userId) {
         List<Book> bookList = null;
         try {
-            String sql = "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE created_by=?";
+            String sql = "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE created_by=? AND is_deleted=0";
             bookList = jdbcTemplate.query(sql, new Object[]{userId},
                     new BeanPropertyRowMapper<>(Book.class));
             return bookList;
@@ -187,11 +204,11 @@ public class NotebookDaoImpl implements NotebookDao {
             String sql = "SELECT * FROM books WHERE created_by=? AND id=?";
             jdbcTemplate.queryForObject(sql, new Object[]{userId, bookId},
                     new BeanPropertyRowMapper<>(Book.class));
-            String sql1 = "SELECT * FROM notes WHERE created_by=? AND book_id=?";
+            String sql1 = "SELECT * FROM notes WHERE created_by=? AND book_id=? AND is_deleted=0";
             noteList = jdbcTemplate.query(sql1, new Object[]{userId, bookId},
                     new BeanPropertyRowMapper<>(Note.class));
             if (noteList.size() == 0) {
-                return null;
+                return noteList;
             }
             return noteList;
         } catch (Exception e) {
@@ -220,7 +237,7 @@ public class NotebookDaoImpl implements NotebookDao {
     @Override
     public Boolean updateBook(Book book, Long userId, Long bookId) {
         try {
-            String sql = "SELECT EXISTS(SELECT * FROM books WHERE created_by=? AND id=?)";
+            String sql = "SELECT EXISTS(SELECT * FROM books WHERE created_by=? AND id=? AND is_deleted=0)";
             Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, bookId);
             if (b == false) {
                 throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
@@ -295,7 +312,7 @@ public class NotebookDaoImpl implements NotebookDao {
             List<Tag> tagList = jdbcTemplate.query(sql, new Object[]{tag},
                     new BeanPropertyRowMapper<>(Tag.class));
             if (tagList.size() == 0) {
-                return null;
+                return new ArrayList<>();
             }
             Long tagId = tagList.get(0).getId();
             sql = "select note_id from note_tag_map where tag_id=?";
@@ -413,7 +430,7 @@ public class NotebookDaoImpl implements NotebookDao {
             noteList = jdbcTemplate.query(sql1, new Object[]{userId, bookId, noteId},
                     new BeanPropertyRowMapper<>(Note.class));
             if (noteList.size() == 0) {
-                return null;
+                return new NoteResponse();
             }
             NoteResponse noteResponse = new NoteResponse();
             noteResponse.setNote(noteList.get(0));
