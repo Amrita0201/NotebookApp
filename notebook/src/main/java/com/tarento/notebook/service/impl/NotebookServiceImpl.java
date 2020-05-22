@@ -100,6 +100,11 @@ public class NotebookServiceImpl implements NotebookService{
 	public Boolean deleteNote(Long userId, Long bookId, Long noteId) {
 		return notebookdao.deleteNote(userId, bookId, noteId);
 	}
+
+	@Override
+	public Boolean updateNote(Note note, Long userId, Long bookId, Long noteId) {
+		return notebookdao.updateNote(note, userId, bookId, noteId);
+	}
 }
 	
 

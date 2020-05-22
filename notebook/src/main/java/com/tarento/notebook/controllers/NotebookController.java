@@ -129,6 +129,21 @@ public class NotebookController {
 		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
 		return ResponseGenerator.successResponse(responseContainer);
 	}
+	@PutMapping(value = "/book/{book_id}/note/{note_id}", produces = "application/json")
+	public String UpdateNote(@RequestBody Note note, @PathVariable(value = "book_id") long bookID, @PathVariable(value = "note_id") long noteID, @RequestAttribute(value ="UserInfo")
+			String UserInfo, HttpServletResponse response) throws JsonProcessingException {
+		User currentUser = fetchMyUser(UserInfo);
+		Boolean b = (notebookservice.updateNote(note, currentUser.getId(), bookID, noteID));
+		ResponseContainer responseContainer = null;
+		if (b == false) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			responseContainer = new ResponseContainer(ResponseMessage.BOOK_DOESNOT_BELONG_TO_THE_USER.getMessage(), String.valueOf(HttpServletResponse.SC_UNAUTHORIZED), ResponseMessage.ERROR.getMessage());
+			return ResponseGenerator.failureResponse(responseContainer);
+		}
+		response.setStatus(HttpServletResponse.SC_CREATED);
+		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
+		return ResponseGenerator.successResponse(responseContainer);
+	}
 
 	@GetMapping(value="/book/{book_id}/note", produces="application/json")
 	public String GetNotes(@PathVariable(value = "book_id") long bookID, @RequestAttribute(value = "UserInfo")
@@ -162,6 +177,8 @@ public class NotebookController {
 		responseContainer = new ResponseContainer(ResponseMessage.SUCCESSFUL.getMessage(), String.valueOf(HttpServletResponse.SC_CREATED), ResponseMessage.SUCCESSFUL.getMessage());
 		return ResponseGenerator.successResponse(responseContainer);
 	}
+
+
 
 	@GetMapping(value="/search", produces = "application/json")
 	public String Search(@RequestAttribute(value = "UserInfo") String UserInfo,

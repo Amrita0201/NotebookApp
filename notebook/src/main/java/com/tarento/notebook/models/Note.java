@@ -12,6 +12,7 @@ public class Note {
 	private String creationDate;
 	private Long updatedBy;
 	private String updationDate;
+	private String subHeader;
 	
 	public Long getId() {
 		return id;
@@ -78,6 +79,14 @@ public class Note {
 	}
 	public void setBookId(Long bookId) {
 		this.bookId = bookId;
+	}
+
+	public String getSubHeader() {
+		return subHeader;
+	}
+
+	public void setSubHeader(String subHeader) {
+		this.subHeader = subHeader;
 	}
 
 	@Override

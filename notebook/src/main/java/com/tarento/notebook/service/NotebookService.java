@@ -38,4 +38,6 @@ public interface NotebookService {
 	List<Tag> getTagsByUserId(Long userId);
 
 	Boolean deleteNote(Long userId, Long bookId, Long noteId);
+
+	Boolean updateNote(Note note, Long userId, Long bookId, Long noteId);
 }

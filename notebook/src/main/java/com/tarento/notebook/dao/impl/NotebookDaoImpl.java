@@ -126,19 +126,20 @@ public class NotebookDaoImpl implements NotebookDao {
                 public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                     String[] returnValColumn = new String[]{"id"};
                     PreparedStatement statement = con.prepareStatement(
-                            "insert into notes (name,content,created_by,creation_date, book_id) values  (?,?,?,curdate(),?)", returnValColumn);
+                            "insert into notes (name,content,created_by,creation_date, book_id, sub_header) values  (?,?,?,curdate(),?,?)", returnValColumn);
 //                    jdbcTemplate.update("update books set books.number_of_notes = (select COUNT(book_id) from notes where notes.book_id = ?)", new Object[]{bookId});
                     statement.setString(1, note.getName());
                     statement.setString(2, note.getContent());
                     statement.setLong(3, note.getCreatedBy());
                     statement.setLong(4, bookId);
+                    statement.setString(5,note.getSubHeader());
                     return statement;
                 }
             }, keyHolder);
             long id = keyHolder.getKey().longValue();
             note.setBookId(bookId);
             note.setId(id);
-            jdbcTemplate.update("update books set number_of_notes = (select COUNT(book_id) from notes where notes.book_id = books.id) WHERE id=?", new Object[]{bookId});
+            jdbcTemplate.update("update books set number_of_notes = (select COUNT(book_id) from notes where notes.book_id = books.id and is_deleted=0) WHERE id=?", new Object[]{bookId});
             return note;
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,6 +174,7 @@ public class NotebookDaoImpl implements NotebookDao {
                 throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
             }
             jdbcTemplate.update("update notes set is_deleted=1 where id=?", new Object[]{noteId});
+            jdbcTemplate.update("update books set number_of_notes = (select COUNT(book_id) from notes where notes.book_id = books.id and is_deleted=0) WHERE id=?", new Object[]{bookId});
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -255,6 +257,30 @@ public class NotebookDaoImpl implements NotebookDao {
     }
 
     @Override
+    public Boolean updateNote(Note note, Long userId, Long bookId, Long noteId) {
+        try {
+            String sql = "SELECT EXISTS(SELECT * FROM notes WHERE created_by=? AND id=? AND book_id=?)";
+            Boolean b = jdbcTemplate.queryForObject(sql, Boolean.class, userId, noteId, bookId);
+            if (b == false) {
+                throw new BookNotOfUserException(String.format("Book %s not associated with user %s", bookId, userId));
+            }
+            if(note.getName()==null && note.getContent()!= null) {
+                jdbcTemplate.update("update notes set content=?, sub_header=? where id=?", new Object[]{note.getContent(), note.getSubHeader(), noteId});
+                return true;
+            }
+            if(note.getName()!=null && note.getContent()==null) {
+                jdbcTemplate.update("update notes set name=? where id=?", new Object[]{note.getName(), noteId});
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error!! " + e);
+            return false;
+        }
+    }
+
+    @Override
     public List<Book> getBooksIfStarred(Long userId) {
         List<Book> bookList = null;
         try {
@@ -267,7 +293,9 @@ public class NotebookDaoImpl implements NotebookDao {
             bookList = jdbcTemplate.query(new PreparedStatementCreator() {
                 @Override
                 public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-                    String sql = "select * from books where ";
+//                    "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE created_by=? AND is_deleted=0"
+//                    String sql = "select * from books where ";
+                    String sql = "SELECT id,name,created_by as 'createdBy', number_of_notes as 'numOfNotes' FROM books WHERE ";
                     StringBuffer sqlSB = new StringBuffer(sql);
                     boolean flag = false;
                     for(Note note: notesList) {

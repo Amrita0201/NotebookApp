@@ -20,7 +20,7 @@ public class NotebookApplication {
 		return new WebMvcConfigurerAdapter() {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
-				registry.addMapping("/**").allowedMethods("GET", "POST","OPTIONS","DELETE").allowedOrigins("*")
+				registry.addMapping("/**").allowedMethods("GET", "POST","OPTIONS","DELETE", "PUT").allowedOrigins("*")
 						.allowedHeaders("*");
 			}
 		};
